@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamFlix</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#0b0b14;
+color:white;
+}
+
+/* LOGIN */
+.login{
+position:fixed;
+width:100%;
+height:100%;
+background:#0b0b14;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+}
+
+.login input{
+padding:10px;
+margin:5px;
+border:none;
+border-radius:8px;
+width:200px;
+}
+
+.login button{
+padding:10px;
+width:200px;
+background:red;
+border:none;
+color:white;
+cursor:pointer;
+border-radius:8px;
+}
+
+/* HEADER */
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px;
+background:#141424;
+flex-wrap:wrap;
+}
+
+header h1{
+color:red;
+}
+
+input, select{
+padding:8px;
+border-radius:6px;
+border:none;
+margin:5px;
+}
+
+/* GRID */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:10px;
+padding:15px;
+}
+
+.card{
+background:#1c1c2e;
+border-radius:10px;
+overflow:hidden;
+cursor:pointer;
+transition:0.3s;
+position:relative;
+}
+
+.card:hover{
+transform:scale(1.05);
+}
+
+.card img{
+width:100%;
+height:230px;
+object-fit:cover;
+}
+
+.card h3{
+padding:8px;
+font-size:14px;
+}
+
+/* FAVORITO */
+.heart{
+position:absolute;
+top:8px;
+right:8px;
+cursor:pointer;
+font-size:18px;
+}
+
+/* MODAL */
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.85);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.modal-content{
+background:#1c1c2e;
+padding:15px;
+width:90%;
+max-width:500px;
+border-radius:10px;
+}
+
+iframe{
+width:100%;
+height:250px;
+border:none;
+}
+
+button{
+padding:10px;
+margin-top:10px;
+width:100%;
+background:red;
+color:white;
+border:none;
+cursor:pointer;
+border-radius:6px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="login" id="login">
+<h2>🎬 StreamFlix</h2>
+<input id="user" placeholder="Nome">
+<button onclick="enter()">Entrar</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+<header>
+<h1>StreamFlix</h1>
+
+<input id="search" placeholder="Pesquisar...">
+
+<select id="filter">
+<option value="all">Todos</option>
+<option value="filme">Filmes</option>
+<option value="serie">Séries</option>
+<option value="anime">Animes</option>
+<option value="desenho">Desenhos</option>
+<option value="fav">Favoritos ❤️</option>
+</select>
+</header>
+
+<div class="grid" id="grid"></div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+<div class="modal-content">
+<h3 id="title"></h3>
+<iframe id="video"></iframe>
+<p id="desc"></p>
+<button onclick="closeModal()">Fechar</button>
+</div>
+</div>
+
+<script>
+
+// LOGIN
+function enter(){
+let name = document.getElementById("user").value;
+if(name){
+localStorage.setItem("user", name);
+document.getElementById("login").style.display="none";
+document.getElementById("app").style.display="block";
+render();
+}
+}
+
+if(localStorage.getItem("user")){
+document.getElementById("login").style.display="none";
+document.getElementById("app").style.display="block";
+}
+
+// DADOS
+const data = [
+{
+title:"Vingadores",
+type:"filme",
+img:"https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
+video:"TcMBFSGVi1c",
+desc:"Heróis salvam o universo."
+},
+{
+title:"Stranger Things",
+type:"serie",
+img:"https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
+video:"b9EkMc79ZSU",
+desc:"Mistérios sobrenaturais."
+},
+{
+title:"Naruto",
+type:"anime",
+img:"https://image.tmdb.org/t/p/w500/x3F9a5XQ.jpg",
+video:"1dy2zPPrKD0",
+desc:"Um ninja determinado."
+},
+{
+title:"Tom e Jerry",
+type:"desenho",
+img:"https://image.tmdb.org/t/p/w500/m5b4k.jpg",
+video:"ttbTgZK5Xh0",
+desc:"Clássico da perseguição."
+}
+];
+
+let fav = JSON.parse(localStorage.getItem("fav")) || [];
+
+// RENDER
+function render(){
+
+let grid = document.getElementById("grid");
+let search = document.getElementById("search").value.toLowerCase();
+let filter = document.getElementById("filter").value;
+
+grid.innerHTML="";
+
+data.forEach((item,i)=>{
+
+let isFav = fav.includes(i);
+
+if(
+(filter==="all" || item.type===filter || (filter==="fav" && isFav)) &&
+item.title.toLowerCase().includes(search)
+){
+
+grid.innerHTML+=`
+<div class="card">
+<img src="${item.img}" onclick="openM(${i})">
+<div class="heart" onclick="toggleFav(${i})">
+${isFav?"❤️":"🤍"}
+</div>
+<h3>${item.title}</h3>
+</div>
+`;
+}
+
+});
+
+}
+
+// FAVORITOS
+function toggleFav(i){
+if(fav.includes(i)){
+fav = fav.filter(x=>x!==i);
+}else{
+fav.push(i);
+}
+localStorage.setItem("fav", JSON.stringify(fav));
+render();
+}
+
+// MODAL
+function openM(i){
+document.getElementById("modal").style.display="flex";
+document.getElementById("title").innerText=data[i].title;
+document.getElementById("desc").innerText=data[i].desc;
+document.getElementById("video").src=`https://www.youtube.com/embed/${data[i].video}`;
+}
+
+function closeModal(){
+document.getElementById("modal").style.display="none";
+document.getElementById("video").src="";
+}
+
+// EVENTS
+document.getElementById("search").addEventListener("input",render);
+document.getElementById("filter").addEventListener("change",render);
+
+render();
+
+</script>
+
+</body>
+</html>
